@@ -77,13 +77,13 @@ app.get('/callback', cors(corsOptions), function (req, res) {
       })
       .then(response => response.json())
       .then((data) =>{
+        const frontEndDomain = `${process.env.SPOTIFY_CALLBACK_URL_FRONTEND}/dashboard`
         const expiresIn = data.expires_in; 
         const expiresAt = Date.now() + expiresIn * 1000; 
 
-        res.cookie('access_token', data.access_token, { httpOnly: true, secure: false }); 
-        res.cookie('expires_in', expiresAt, { httpOnly: true, secure: false }); 
-        res.cookie('refresh_token', data.refresh_token, { httpOnly: true, secure: false }); 
-        res.redirect(`${process.env.SPOTIFY_CALLBACK_URL_FRONTEND}/dashboard`)});
+        res.cookie('access_token', data.access_token, { httpOnly: true, secure: false, expires: new Date(expiresAt), domain: frontEndDomain }) 
+        .cookie('refresh_token', data.refresh_token, { httpOnly: true, secure: false, domain: frontEndDomain })
+        .redirect(frontEndDomain)});
 
     }
   
