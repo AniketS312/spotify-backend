@@ -83,7 +83,7 @@ app.get('/callback', cors(corsOptions), function (req, res) {
         res.cookie('access_token', data.access_token, { httpOnly: true, secure: false }); 
         res.cookie('expires_in', expiresAt, { httpOnly: true, secure: false }); 
         res.cookie('refresh_token', data.refresh_token, { httpOnly: true, secure: false }); 
-        res.redirect(`${process.env.SPOTIFY_CALLBACK_URL_FRONTEND}/dashboard?`)});
+        res.redirect(`${process.env.SPOTIFY_CALLBACK_URL_FRONTEND}/dashboard`)});
 
     }
   
