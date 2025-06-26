@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();  
+const querystring = require('querystring');
 const PORT = process.env.PORT || 5000;
 require('dotenv').config()
 
@@ -18,7 +19,7 @@ passport.use(
     {
       clientID: process.env.SPOTIFY_CLIENT_ID,
       clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-      callbackURL: process.env.SPOTIFY_CALLBACK_URL,
+      callbackURL:  process.env.SPOTIFY_CALLBACK_URL ,
     },
     function (accessToken, refreshToken, expires_in, profile, done) {
       User.findOrCreate({spotifyId: profile.id}, function (err, user) {
@@ -34,24 +35,53 @@ app.get('/', (req, res) => {
 
 });
 
-app.get('/test', 
+app.get('/login', 
     cors(corsOptions),
     passport.authenticate('spotify', {
         scope: ['playlist-read-private', 'user-library-modify', 'user-library-read'],
         failureRedirect: '/error',
         showDialog: true
-    }),
-    function (req, res) {
-        // Successful authentication, redirect home.
-        res.redirect('http://localhost:5173//home');
-    }
+    })
 );
-app.get('/home', (req, res) => {
-    res.send('This is the home page after successful authentication!');
-});
+
+app.get('/callback', cors(corsOptions), function (req, res) {
+    const code = req.query.code || null;
+    const error = req.query.error || null;
+
+    if(error !== null) {
+      res.status(400).redirect(`${process.env.SPOTIFY_CALLBACK_URL_FRONTEND}/?error=${error}`);
+    } 
+    if(code === null) {
+      res.status(400).send('No code provided');
+    }
+
+    if(code !== null) {
+      const params = new URLSearchParams();
+      params.append('code', code);
+      params.append('redirect_uri', process.env.SPOTIFY_CALLBACK_URL);
+      params.append('grant_type', 'authorization_code');
+      
+
+      fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': 'Basic ' + Buffer.from(
+            process.env.SPOTIFY_CLIENT_ID + ':' + process.env.SPOTIFY_CLIENT_SECRET).toString('base64')
+        },
+        json: true,
+        body:  params.toString(),
+      })
+      .then(response => response.json())
+      .then(data => res.redirect(`${process.env.SPOTIFY_CALLBACK_URL_FRONTEND}/dashboard?`+ querystring.stringify(data)));
+
+    }
+  
+})
+
 
 app.get('/error', (req, res) => {
-    res.send('This is the error page!');
+    res.status(500).redirect('This is the error page!');
 });
 
 app.listen(PORT, () => {
