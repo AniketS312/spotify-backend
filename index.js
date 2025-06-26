@@ -1,11 +1,9 @@
 const express = require('express');
 const app = express();  
-const cookieParser = require('cookie-parser');
 const querystring = require('querystring');
 const PORT = process.env.PORT || 5000;
 require('dotenv').config()
 
-app.use(cookieParser());
 
 const cors = require('cors')
 const corsOptions = {
@@ -77,13 +75,12 @@ app.get('/callback', cors(corsOptions), function (req, res) {
       })
       .then(response => response.json())
       .then((data) =>{
-        const frontEndDomain = `${process.env.SPOTIFY_CALLBACK_URL_FRONTEND}/dashboard`
         const expiresIn = data.expires_in; 
-        const expiresAt = Date.now() + expiresIn * 1000; 
+        const expiresAt = new Date(Date.now() + expiresIn * 1000);
 
-        res.cookie('access_token', data.access_token, { httpOnly: true, secure: false, expires: new Date(expiresAt), domain: frontEndDomain }) 
-        .cookie('refresh_token', data.refresh_token, { httpOnly: true, secure: false, domain: frontEndDomain })
-        .redirect(frontEndDomain)});
+        res.cookie('access_token', data.access_token, { httpOnly: true, secure: false, expires: expiresAt, domain: 'localhost' }) 
+        .cookie('refresh_token', data.refresh_token, { httpOnly: true, secure: false, domain: 'localhost' })
+        .redirect(`${process.env.SPOTIFY_CALLBACK_URL_FRONTEND}/dashboard`)});
 
     }
   
