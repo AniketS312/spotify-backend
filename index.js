@@ -1,6 +1,5 @@
 const express = require('express');
 const app = express();  
-const querystring = require('querystring');
 const PORT = process.env.PORT || 5000;
 require('dotenv').config()
 
@@ -75,13 +74,15 @@ app.get('/callback', cors(corsOptions), function (req, res) {
       })
       .then(response => response.json())
       .then((data) =>{
+        const urlParams = new URLSearchParams();
+        urlParams.append('access_token', data.access_token);
+        urlParams.append('refresh_token', data.refresh_token);
+      
         const expiresIn = data.expires_in; 
         const expiresAt = new Date(Date.now() + expiresIn * 1000);
-
-        res.cookie('access_token', data.access_token, { httpOnly: true, secure: false, expires: expiresAt, domain: 'localhost' }) 
-        .cookie('refresh_token', data.refresh_token, { httpOnly: true, secure: false, domain: 'localhost' })
-        .redirect(`${process.env.SPOTIFY_CALLBACK_URL_FRONTEND}/dashboard`)});
-
+        urlParams.append('expires_in', expiresAt.toISOString());
+        
+        res.redirect(`${process.env.SPOTIFY_CALLBACK_URL_FRONTEND}/dashboard?` + urlParams.toString());});
     }
   
 })
