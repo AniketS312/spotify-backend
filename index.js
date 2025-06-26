@@ -1,8 +1,11 @@
 const express = require('express');
 const app = express();  
+const cookieParser = require('cookie-parser');
 const querystring = require('querystring');
 const PORT = process.env.PORT || 5000;
 require('dotenv').config()
+
+app.use(cookieParser());
 
 const cors = require('cors')
 const corsOptions = {
@@ -73,7 +76,11 @@ app.get('/callback', cors(corsOptions), function (req, res) {
         body:  params.toString(),
       })
       .then(response => response.json())
-      .then(data => res.redirect(`${process.env.SPOTIFY_CALLBACK_URL_FRONTEND}/dashboard?`+ querystring.stringify(data)));
+      .then((data) =>{
+        res.cookie('access_token', data.access_token, { httpOnly: true, secure: false }); 
+        res.cookie('expires_in', data.expires_in, { httpOnly: true, secure: false }); 
+        res.cookie('refresh_token', data.refresh_token, { httpOnly: true, secure: false }); 
+        res.redirect(`${process.env.SPOTIFY_CALLBACK_URL_FRONTEND}/dashboard?`)});
 
     }
   
